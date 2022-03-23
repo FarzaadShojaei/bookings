@@ -30,7 +30,8 @@ func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateDa
 	td.Flash = app.Session.PopString(r.Context(), "flash")
 	td.Error = app.Session.PopString(r.Context(), "error")
 	td.Warning = app.Session.PopString(r.Context(), "warning")
-	td.Modal = app.Session.PopString(r.Context(), "modal")
+
+	//td.Modal = app.Session.PopString(r.Context(), "modal")
 
 	return td
 }
