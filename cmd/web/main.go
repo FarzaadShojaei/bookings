@@ -11,6 +11,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 
 	"github.com/tsawler/bookings/internal/config"
+	"github.com/tsawler/bookings/internal/driver"
 	"github.com/tsawler/bookings/internal/handlers"
 	"github.com/tsawler/bookings/internal/helpers"
 	"github.com/tsawler/bookings/internal/models"
@@ -53,10 +54,11 @@ func divideValues(x, y float32) (float32, error) {
 */
 //main is the main application function
 func main() {
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.SQL.Close()
 
 	//http.HandleFunc("/", handlers.Repo.Home)
 	//http.HandleFunc("/about", handlers.Repo.About)
@@ -72,7 +74,7 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	//what am I Going to Put in The Session
 	gob.Register(models.Reservation{})
 	//change this to true when in production
@@ -95,19 +97,29 @@ func run() error {
 
 	app.Session = session
 
+	//connect to database
+	log.Println("Connecting to Database")
+
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=1379")
+	if err != nil {
+		log.Fatal("Cannot Connect to database ! Dying....")
+	}
+
+	log.Println("Connected to database")
+
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("Cannot Create Template")
-		return err
+		return nil, err
 	}
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }

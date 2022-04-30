@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"github.com/tsawler/bookings/internal/helpers"
 	"github.com/tsawler/bookings/internal/models"
 	"github.com/tsawler/bookings/internal/render"
+	"github.com/tsawler/bookings/internal/repository"
+	"github.com/tsawler/bookings/internal/repository/dbrepo"
 )
 
 // Repo the repository used by the handlers
@@ -18,12 +21,14 @@ var Repo *Repository
 // Repository is the repository type
 type Repository struct {
 	App *config.AppConfig
+	DB  repository.DatabaseRepo
 }
 
 // NewRepo creates a new repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		App: a,
+		DB:  dbrepo.NewPostgresRepo(db.SQL, a),
 	}
 }
 
@@ -34,7 +39,7 @@ func NewHandlers(r *Repository) {
 
 //Home is the home page handler
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
-
+	m.DB.AllUsers()
 	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{})
 }
 
